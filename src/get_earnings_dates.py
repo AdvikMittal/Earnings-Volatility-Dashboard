@@ -7,45 +7,45 @@ from selenium.webdriver.chrome.service import Service
 import sqlite3
 import os
 
-# Initialize Selenium WebDriver
-options = webdriver.ChromeOptions()
-options.add_argument('--verbose')
-options.add_argument('--headless')
-options.add_argument('--disable-gpu')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-
-driver = webdriver.Chrome(options=options)
-
 def get_earnings_for_symbol(symbol, limit):
-
-    today_date = datetime.now().date().strftime("%Y-%m-%d")
-
-    url = f"https://finance.yahoo.com/calendar/earnings?day={today_date}&symbol={symbol}&offset=0&size={limit}"
-    print(url)
-
-    driver.get(url)
-    driver.implicitly_wait(5)  # Wait for page to load
-
-    page_content = driver.page_source
-    soup = BeautifulSoup(page_content, 'html.parser')
-
-    table = soup.find('table', {'class': 'bd'})
-
-    if table:
-        headers = [header.text for header in table.find_all('th')]
-        rows = []
-        for row in table.find_all('tr')[1:]:  # Skip header row
-            rows.append([cell.text for cell in row.find_all('td')])
-
-        headers = [h.strip() for h in headers]
-        df = pd.DataFrame(rows, columns=headers)
-
-        return df
-
-    else:
-        print("Earnings table not found")
-        return None
+    # Create driver instance for each call
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.page_load_timeout = 30
+    
+    driver = webdriver.Chrome(options=options)
+    
+    try:
+        today_date = datetime.now().date().strftime("%Y-%m-%d")
+        url = f"https://finance.yahoo.com/calendar/earnings?day={today_date}&symbol={symbol}&offset=0&size={limit}"
+        print(url)
+        
+        driver.set_page_load_timeout(30)
+        driver.get(url)
+        driver.implicitly_wait(5)
+        
+        page_content = driver.page_source
+        soup = BeautifulSoup(page_content, 'html.parser')
+        
+        table = soup.find('table', {'class': 'bd'})
+        
+        if table:
+            headers = [header.text for header in table.find_all('th')]
+            rows = []
+            for row in table.find_all('tr')[1:]:
+                rows.append([cell.text for cell in row.find_all('td')])
+            
+            headers = [h.strip() for h in headers]
+            df = pd.DataFrame(rows, columns=headers)
+            return df
+        else:
+            print("Earnings table not found")
+            return None
+    finally:
+        driver.quit()
 
 def get_past_earnings_dates(symbol, limit=20, years=5):
     init_db()
@@ -55,9 +55,8 @@ def get_past_earnings_dates(symbol, limit=20, years=5):
     if cached:
         return cached
     
-    # Fetch from API
+    # Fetch from web
     df = get_earnings_for_symbol(symbol, limit)
-    driver.close()
     
     # Extract date and determine if before/after market
     df['date'] = pd.to_datetime(df['Earnings Date'].str.split(' at ').str[0])
