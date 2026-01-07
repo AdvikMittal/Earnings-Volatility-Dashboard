@@ -1,15 +1,16 @@
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from dotenv import dotenv_values
 from datetime import datetime, timedelta
 import requests
 import sqlite3
 import json
+import streamlit as st
 
-config = dotenv_values("C:\\dev\\keys\\new_alpaca_keys.txt")
-alpaca_key, alpaca_sec = config['key'], config['sec']
-mdata_token = config['mdata_token']
+# Load API keys from Streamlit secrets
+alpaca_key = st.secrets["key"]
+alpaca_sec = st.secrets["sec"]
+mdata_token = st.secrets["mdata_token"]
 stock_client = StockHistoricalDataClient(alpaca_key, alpaca_sec)
 
 def get_stock_price_at_945(ticker, date):

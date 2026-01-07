@@ -46,6 +46,9 @@ wheels/
 .env
 .env.local
 
+# Streamlit secrets
+.streamlit/secrets.toml
+
 # OS
 .DS_Store
 Thumbs.db
