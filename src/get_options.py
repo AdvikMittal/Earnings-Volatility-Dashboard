@@ -9,10 +9,12 @@ from datetime import timedelta
 import logging
 import utils
 import pandas_market_calendars as mcal
+import streamlit as st
 
-config = dotenv_values("C:\\dev\\keys\\new_alpaca_keys.txt")
-key, sec = config['key'], config['sec']
-option_client = OptionHistoricalDataClient(key, sec)
+# Load API keys from Streamlit secrets
+alpaca_key = st.secrets["key"]
+alpaca_sec = st.secrets["sec"]
+option_client = OptionHistoricalDataClient(alpaca_key, alpaca_sec)
 
 def get_options_data(ticker, earnings_date, lookback, lookahead):
     
